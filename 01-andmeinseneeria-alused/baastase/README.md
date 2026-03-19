@@ -8,11 +8,11 @@ Selle praktikumi eesmärk on panna oma arvutis tööle PostgreSQL-andmebaas Dock
 
 Praktikumi lõpuks oskab õppija:
 
-- käivitab `docker compose` abil PostgreSQL-andmebaasi;
-- loob ühenduse andmebaasiga tööriistaga `psql`;
-- loob SQL-iga tabeli;
-- laadib CSV-faili tabelisse käsuga `COPY`;
-- kontrollib SQL-päringuga, et andmed jõudsid tabelisse.
+- käivitada `docker compose` abil PostgreSQL-andmebaasi;
+- luua ühenduse andmebaasiga tööriistaga `psql`;
+- luua SQL-iga tabeli;
+- laadida CSV-faili tabelisse käsuga `COPY`;
+- kontrollida SQL-päringuga, et andmed jõudsid tabelisse.
 
 ## Hinnanguline ajakulu
 
@@ -25,7 +25,7 @@ Praktikumi põhiosa koosneb neljast etapist:
 - tabeli loomine ja CSV-faili laadimine;
 - tulemuse kontrollimine.
 
-## Enne alustamist
+## Eeldused
 
 Vaja on:
 
@@ -39,52 +39,96 @@ Dockeri paigaldusjuhendid:
 - Windowsi paigaldusjuhend: <https://docs.docker.com/desktop/setup/install/windows-install/>
 - macOS-i paigaldusjuhend: <https://docs.docker.com/desktop/setup/install/mac-install/>
 
+Kui Docker on juba paigaldatud, siis kontrolli enne praktikumi alustamist, et see oleks käivitatud.
+
+## Miks see teema on oluline
+
+Andmeinseneeria töö algab väga tihti lihtsast olukorrast: keegi annab sulle faili ja ootab, et sa oskaksid selle turvaliselt ning kontrollitavalt andmebaasi laadida.
+
+See oskus on vajalik enne peaaegu kõiki järgmisi samme. Enne kui saad andmeid puhastada, pärida, siduda või torustikku lisada, pead oskama keskkonna käivitada, andmebaasiga ühenduse luua ja kontrollida, et andmed jõudsid õigesse kohta.
+
+Praktikumi mõttes on see esimene täielik tööahel. Tööelus on see võrreldav olukorraga, kus saad näiteks CSV-väljavõtte mõnest ärisüsteemist ja pead selle analüüsi või edasise töötlemise jaoks andmebaasi sisse lugema.
+
 ## Praktikumi failid
 
-- `compose.yml` kirjeldab andmebaasi konteinerit
-- `.env.example` sisaldab ühenduse näidisväärtusi
-- `data/countries.csv` on näidisandmestik
-- `scripts/01_create_countries_table.sql` loob tabeli
-- `scripts/02_load_countries.sql` laadib CSV-faili tabelisse
-- `scripts/03_check_countries.sql` kontrollib tulemust
-- `scripts/99_drop_countries.sql` kustutab tabeli, kui soovid alustada puhtalt lehelt
+- [`compose.yml`](./compose.yml) kirjeldab andmebaasi konteinerit
+- [`.env.example`](./.env.example) sisaldab ühenduse näidisväärtusi
+- [`data/countries.csv`](./data/countries.csv) on näidisandmestik
+- [`scripts/01_create_countries_table.sql`](./scripts/01_create_countries_table.sql) loob tabeli
+- [`scripts/02_load_countries.sql`](./scripts/02_load_countries.sql) laadib CSV-faili tabelisse
+- [`scripts/03_check_countries.sql`](./scripts/03_check_countries.sql) kontrollib tulemust
+- [`scripts/99_drop_countries.sql`](./scripts/99_drop_countries.sql) kustutab tabeli, kui soovid alustada puhtalt lehelt
 
 ## Uued mõisted
 
+Selles praktikumis moodustavad uued mõisted ühe tööahela. Kõigepealt käivitame valmis aluse põhjal andmebaasi konteineri, seome sellele vajalikud failid, ühendume käsurealt andmebaasiga ja laadime CSV-faili tabelisse.
+
 ### Docker image
 
-Valmis alus, mille põhjal konteiner käivitatakse.
+Kui tahame, et kõigil õppijatel oleks võimalikult ühesugune keskkond, ei ole mõistlik andmebaasi iga arvuti peal käsitsi nullist seadistada.
+
+Docker image on valmis alus, mille põhjal konteiner käivitatakse.
+
+Selles praktikumis kasutame pilti `pgduckdb/pgduckdb:18-v1.1.1`.
 
 ### Konteiner
 
-Töötav eraldatud keskkond. Selles praktikumis töötab PostgreSQL konteineris.
+Andmebaasi on vaja kusagil päriselt käivitada.
+
+Konteiner on töötav eraldatud keskkond, mis käivitatakse image'i põhjal.
+
+Selles praktikumis töötab andmebaas Dockeri konteineris teenusena `db`.
 
 ### Docker volume
 
-Dockeri mahuühendus seob konteineri mõne hosti kausta või püsiva andmeruumiga. Selles praktikumis on meil kaks tüüpilist näidet:
+Kui tahame, et andmed ei kaoks konteineri peatamisel ja et failid oleksid konteineri jaoks nähtavad, on vaja konteineri ja hosti vahele püsivat seost.
+
+Dockeri mahuühendus seob konteineri mõne hosti kausta või püsiva andmeruumiga.
+
+Selles praktikumis on meil kaks tüüpilist näidet:
 
 - `pgdata:/var/lib/postgresql` hoiab andmebaasi andmed alles
 - `./data:/data` teeb hosti `./data` kausta konteineri sees nähtavaks
 
 ### Docker network
 
-Dockeri sisevõrk, mille kaudu konteinerid omavahel suhtlevad. Selles praktikumis ei pea me seda veel eraldi seadistama, aga `docker compose` loob selle taustal automaatselt.
+Kui rakenduses on mitu konteinerit, peavad need omavahel suhtlema.
+
+Docker network on Dockeri sisevõrk, mille kaudu konteinerid omavahel suhtlevad.
+
+Selles praktikumis ei pea me seda veel eraldi seadistama, aga `docker compose` loob vajaliku sisevõrgu taustal automaatselt.
 
 ### PostgreSQL
 
-Levinud relatsiooniline andmebaas. Selles praktikumis kasutame seda SQL-päringute ja CSV-andmete laadimise jaoks.
+Meil on vaja kohta, kuhu tabel luua ja kuhu CSV-andmed sisse laadida.
+
+PostgreSQL on levinud relatsiooniline andmebaas, mis salvestab andmeid tabelitena ja lubab neid SQL-iga pärida.
+
+Selles praktikumis loome sinna tabeli `countries` ja laadime sinna esimese andmestiku.
 
 ### `psql`
 
-PostgreSQL käsurea klient. Selle kaudu saame andmebaasiga ühenduse luua ja SQL-i käivitada.
+Andmebaasist üksi ei piisa. Vaja on ka tööriista, millega sinna sisse vaadata ja käske käivitada.
+
+`psql` on PostgreSQL käsurea klient. Selle kaudu saame andmebaasiga ühenduse luua ja SQL-i käivitada.
+
+Selles praktikumis ühendume käsuga `docker compose exec db psql -U praktikum -d praktikum`.
 
 ### CSV
 
-Lihtne tekstifail tabelandmete jaoks. Olulised omadused on päis, eraldaja ja kodeering.
+Andmed liiguvad väga sageli süsteemide vahel lihtsa failina.
+
+CSV on tekstifail tabelandmete jaoks. Olulised omadused on päis, eraldaja ja kodeering.
+
+Selles praktikumis kasutame faili `data/countries.csv`.
 
 ### `COPY`
 
-PostgreSQL käsk, mis loeb faili ja laadib selle sisu tabelisse.
+Kui andmeridu on rohkem kui paar, ei sisestata neid tavaliselt käsitsi ükshaaval.
+
+`COPY` on PostgreSQL käsk, mis loeb faili ja laadib selle sisu tabelisse.
+
+Selles praktikumis loeme käsuga `COPY` andmed failist `/data/countries.csv` tabelisse `countries`.
 
 ## Tähtis vahe: host ja konteiner
 
@@ -97,7 +141,7 @@ See vahe on oluline, sest failitee *on* kummaski kontekstis erinev.
 
 Näide:
 
-- hostis on fail tee all `<kursuse kataloog>/baastase/praktikum-01/data/countries.csv`
+- hostis on fail tee all `<repo juurkataloog>/01-andmeinseneeria-alused/baastase/data/countries.csv`
 - andmebaasi konteineri sees on sama fail tee all `/data/countries.csv`
 
 Kirje `./data:/data` tähendab siin väga konkreetselt järgmist:
@@ -115,9 +159,15 @@ Seega:
 
 ## 1. Ava praktikumi kaust
 
-Liigu terminalis kausta `baastase/praktikum-01`.
+Liigu terminalis kausta `01-andmeinseneeria-alused/baastase`.
 
 Kui kasutad VS Code'i, siis lihtsaim tee on avada see kaust ja käivitada terminal otse sealt.
+
+Kui alustad repo juurkaustast, siis kasuta käsku:
+
+```bash
+cd 01-andmeinseneeria-alused/baastase
+```
 
 ## 2. Loo `.env` fail
 
@@ -148,10 +198,11 @@ Praegu ei ole vaja neid muuta.
 
 Enne käivitamist tasub aru saada, mida see fail teeb.
 
+- `env_file` ütleb, et `docker compose` loeb ühenduse väärtused failist `.env`
 - `image` määrab, milline andmebaasi pilt käivitatakse
 - `ports` seob konteineri pordi `5432` sinu arvuti pordiga `5432`
 - `volumes` teeb kaustad `data` ja `scripts` konteineris nähtavaks ning hoiab andmebaasi andmed alles
-- `network` tekib `docker compose`-iga automaatselt ja võimaldab konteineritel omavahel suhelda
+- eraldi `networks` plokki siin ei ole, sest `docker compose` loob vaikimisi sisevõrgu automaatselt
 - `healthcheck` kontrollib, kas andmebaas on valmis ühendusi vastu võtma
 
 Me kasutame siin `docker compose`-it, kuigi teenuseid on ainult üks. Põhjus on lihtne: nii on keskkond kirjas failis, mitte pika käsu sees.
@@ -251,7 +302,7 @@ Praegu piisab sellest, kui saad aru, et:
 
 ## 7. Vaata CSV-fail üle
 
-Ava fail `data/countries.csv` tekstiredaktoris. Esimesed read on sellised:
+Ava fail [`data/countries.csv`](./data/countries.csv) tekstiredaktoris. Esimesed read on sellised:
 
 ```csv
 id,name,capital,population,area_km2,continent
