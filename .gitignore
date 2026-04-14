@@ -23,5 +23,6 @@ temp/
 *.tmp
 *.log
 .cache/
+*~
 
 .devcontainer
